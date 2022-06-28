@@ -12,6 +12,13 @@ abstract class Element {
 	abstract val id: String
 
 	/**
+	 * The entry for the scoreboard. Must be unique.
+	 * Best if it does not visibly appear, as this is the text
+	 * the prefix (display) is attatched to.
+	 */
+	abstract val entry: String
+
+	/**
 	 * @return the text that should be displayed on [player]'s scoreboard
 	 */
 	abstract fun display(player: Player): String

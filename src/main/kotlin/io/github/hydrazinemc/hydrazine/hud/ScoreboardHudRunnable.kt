@@ -1,9 +1,13 @@
 package io.github.hydrazinemc.hydrazine.hud
 
+import io.github.hydrazinemc.hydrazine.hud.elements.CountingElement
 import io.github.hydrazinemc.hydrazine.hud.elements.TestElement
+import io.github.hydrazinemc.hydrazine.utils.extensions.asMiniMessage
+import org.bukkit.Bukkit
 import org.bukkit.Bukkit.getServer
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitRunnable
+import org.bukkit.scoreboard.DisplaySlot
 
 /**
  * Updates the Scoreboard HUDs of players
@@ -11,23 +15,28 @@ import org.bukkit.scheduler.BukkitRunnable
 object ScoreboardHudRunnable: BukkitRunnable() {
 	override fun run() {
 		getServer().onlinePlayers.forEach {player ->
-			var text = mutableListOf<String>()
-			player.hudElements.forEach { element ->
-				text.add(element.display(player))
+			// Ensure there is a scoreboard displayed
+			val board = Bukkit.getScoreboardManager().newScoreboard
+			val obj = board.getObjective("dummy") ?: board.registerNewObjective("dummy", "dummy", "dummy".asMiniMessage)
+			obj.displaySlot = DisplaySlot.SIDEBAR
+
+			var score = 1
+			player.hudElements.reversed().forEach { element ->
+				val team = board.getTeam("line-$score") ?: board.registerNewTeam("line-$score")
+				team.entries.forEach{team.removeEntry(it)}
+				team.prefix(element.display(player).asMiniMessage)
+				team.addEntry(element.entry)
+				obj.getScore(element.entry).score = score
+				score++
 			}
-			player.displayScoreboard(text.joinToString("\n"))
+			player.scoreboard = board
 		}
 	}
 }
 
 /**
- * Display [text] on the player's scoreboard
- */
-fun Player.displayScoreboard(text: String) {}
-
-/**
  * The player's HUD [Element]s
  */
 var Player.hudElements: List<Element>
-	get() = listOf(TestElement())
+	get() = listOf(TestElement, CountingElement)
 	set(value) {}
